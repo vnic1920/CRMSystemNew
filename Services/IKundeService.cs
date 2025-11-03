@@ -1,5 +1,4 @@
 ﻿using CRMSystemNew.Models;
-using System.Threading.Tasks;
 
 namespace CRMSystemNew.Services
 {
@@ -7,9 +6,8 @@ namespace CRMSystemNew.Services
     {
         Task<List<Kunde>> GetAllKundenAsync();
         Task<Kunde?> GetKundeByIdAsync(int id);
-        Task AddKundeAsync(Kunde kunde);
-        Task UpdateKundeAsync(Kunde kunde);
-        Task DeleteKundeAsync(int id);
-        Task<(List<Kunde> Kunden, int TotalCount)> GetKundenPagedAsync(int page, int pageSize, string searchString);
+        Task<Kunde> CreateKundeAsync(Kunde kunde);
+        Task<Kunde> UpdateKundeAsync(Kunde kunde);
+        Task<bool> DeleteKundeAsync(int id);
     }
 }

@@ -538,3 +538,13 @@ C:\Users\vnic192\source\repos\CRMSystemNew\obj\Debug\net8.0\refint\CRMSystemNew.
 C:\Users\vnic192\source\repos\CRMSystemNew\obj\Debug\net8.0\CRMSystemNew.pdb
 C:\Users\vnic192\source\repos\CRMSystemNew\obj\Debug\net8.0\CRMSystemNew.genruntimeconfig.cache
 C:\Users\vnic192\source\repos\CRMSystemNew\obj\Debug\net8.0\ref\CRMSystemNew.dll
+C:\Users\vnic192\source\repos\vnic1920\CRMSystemNew\obj\Debug\net8.0\CRMSystemNew.csproj.AssemblyReference.cache
+C:\Users\vnic192\source\repos\vnic1920\CRMSystemNew\obj\Debug\net8.0\rpswa.dswa.cache.json
+C:\Users\vnic192\source\repos\vnic1920\CRMSystemNew\obj\Debug\net8.0\CRMSystemNew.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\vnic192\source\repos\vnic1920\CRMSystemNew\obj\Debug\net8.0\CRMSystemNew.AssemblyInfoInputs.cache
+C:\Users\vnic192\source\repos\vnic1920\CRMSystemNew\obj\Debug\net8.0\CRMSystemNew.AssemblyInfo.cs
+C:\Users\vnic192\source\repos\vnic1920\CRMSystemNew\obj\Debug\net8.0\CRMSystemNew.csproj.CoreCompileInputs.cache
+C:\Users\vnic192\source\repos\vnic1920\CRMSystemNew\obj\Debug\net8.0\CRMSystemNew.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\vnic192\source\repos\vnic1920\CRMSystemNew\obj\Debug\net8.0\CRMSystemNew.RazorAssemblyInfo.cache
+C:\Users\vnic192\source\repos\vnic1920\CRMSystemNew\obj\Debug\net8.0\CRMSystemNew.RazorAssemblyInfo.cs
+C:\Users\vnic192\source\repos\vnic1920\CRMSystemNew\obj\Debug\net8.0\CRMSystemNew.sourcelink.json

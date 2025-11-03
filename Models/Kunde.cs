@@ -7,19 +7,23 @@ namespace CRMSystemNew.Models
         public int Id { get; set; }
 
         [Required(ErrorMessage = "Kundenname ist erforderlich")]
-        [StringLength(100, ErrorMessage = "Name darf max. 100 Zeichen haben")]
+        [StringLength(100)]
         public string Name { get; set; } = string.Empty;
+
+        [StringLength(200)]
+        public string? Adresse { get; set; }
+
+        [Phone(ErrorMessage = "Ungültige Telefonnummer")]
+        public string? Telefon { get; set; }
 
         [EmailAddress(ErrorMessage = "Ungültige E-Mail-Adresse")]
         public string? Email { get; set; }
 
-        public string? Telefon { get; set; }
-        public string? Adresse { get; set; }
-        public string? Stadt { get; set; }
-        public string? Postleitzahl { get; set; }
-        public DateTime Erstellungsdatum { get; set; } = DateTime.Now;
+        public DateTime ErstelltAm { get; set; } = DateTime.Now;
+        public DateTime? GeändertAm { get; set; }
 
-        // Navigation Property für Kontakte
+        // Navigation Properties
         public virtual ICollection<Kontakt> Kontakte { get; set; } = new List<Kontakt>();
+        public virtual ICollection<Aufgabe> Aufgaben { get; set; } = new List<Aufgabe>();
     }
 }

@@ -6,26 +6,26 @@ namespace CRMSystemNew.Models
     {
         public int Id { get; set; }
 
-        [Required(ErrorMessage = "Vorname ist erforderlich")]
+        [Required]
+        [StringLength(50)]
         public string Vorname { get; set; } = string.Empty;
 
-        [Required(ErrorMessage = "Nachname ist erforderlich")]
+        [Required]
+        [StringLength(50)]
         public string Nachname { get; set; } = string.Empty;
 
-        public string? Position { get; set; }
-
-        [EmailAddress(ErrorMessage = "Ungültige E-Mail-Adresse")]
+        [EmailAddress]
         public string? Email { get; set; }
 
+        [Phone]
         public string? Telefon { get; set; }
-        public bool IstHauptansprechpartner { get; set; }
+
+        public string? Position { get; set; }
 
         // Foreign Key
         public int KundeId { get; set; }
 
         // Navigation Property
-        public virtual Kunde? Kunde { get; set; }
-
-        public DateTime Erstellungsdatum { get; set; } = DateTime.Now;
+        public virtual Kunde Kunde { get; set; } = null!;
     }
 }
