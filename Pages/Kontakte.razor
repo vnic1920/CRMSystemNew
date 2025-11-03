@@ -1,0 +1,251 @@
+﻿@page "/kontakte/{kundeId:int}"
+@using CRMSystemNew.Services
+@using CRMSystemNew.Models
+@inject KundeService KundeService
+@inject NavigationManager Navigation
+
+<h3>Kontakte für @kunde?.Name</h3>
+
+@if (kunde != null)
+{
+    <!-- Neuer Kontakt Button -->
+    <div class="mb-3">
+        <button class="btn btn-success" @onclick="NeuenKontaktAnlegen">
+            + Neuer Kontakt
+        </button>
+        <button @onclick="ZurückZuKunden" class="btn btn-secondary ms-2">← Zurück zu Kunden</button>
+    </div>
+
+    <!-- Kontakte Tabelle -->
+    @if (kontakte.Any())
+    {
+        <table class="table table-striped">
+            <thead class="table-dark">
+                <tr>
+                    <th>Name</th>
+                    <th>Position</th>
+                    <th>Email</th>
+                    <th>Telefon</th>
+                    <th>Hauptansprechpartner</th>
+                    <th>Aktionen</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var kontakt in kontakte)
+                {
+                    <tr>
+                        <td>@kontakt.Vorname @kontakt.Nachname</td>
+                        <td>@kontakt.Position</td>
+                        <td>@kontakt.Email</td>
+                        <td>@kontakt.Telefon</td>
+                        <td>
+                            @if (kontakt.IstHauptansprechpartner)
+                            {
+                                <span class="badge bg-success">⭐ Ja</span>
+                            }
+                            else
+                            {
+                                <span class="badge bg-secondary">Nein</span>
+                            }
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-primary" @onclick="() => KontaktBearbeiten(kontakt)">
+                                Bearbeiten
+                            </button>
+                            <button class="btn btn-sm btn-danger" @onclick="() => KontaktLöschen(kontakt.Id)">
+                                Löschen
+                            </button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div class="alert alert-info">
+            Noch keine Kontakte für diesen Kunden vorhanden.
+        </div>
+    }
+}
+else
+{
+    <div class="alert alert-warning">
+        Kunde nicht gefunden.
+    </div>
+}
+
+<!-- Bearbeiten/Erstellen Dialog -->
+@if (showDialog)
+{
+    <div class="modal show d-block" style="background: rgba(0,0,0,0.5)">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(aktuellerKontakt?.Id == 0 ? "Neuer Kontakt" : "Kontakt bearbeiten")</h5>
+                </div>
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Vorname *</label>
+                                <input @bind="aktuellerKontakt.Vorname" class="form-control" />
+                                @if (string.IsNullOrWhiteSpace(aktuellerKontakt.Vorname))
+                                {
+                                    <small class="text-danger">Vorname ist erforderlich</small>
+                                }
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Nachname *</label>
+                                <input @bind="aktuellerKontakt.Nachname" class="form-control" />
+                                @if (string.IsNullOrWhiteSpace(aktuellerKontakt.Nachname))
+                                {
+                                    <small class="text-danger">Nachname ist erforderlich</small>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Position</label>
+                        <input @bind="aktuellerKontakt.Position" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input @bind="aktuellerKontakt.Email" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Telefon</label>
+                        <input @bind="aktuellerKontakt.Telefon" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" @bind="aktuellerKontakt.IstHauptansprechpartner" />
+                            <label class="form-check-label">
+                                Hauptansprechpartner
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="DialogSchließen">Abbrechen</button>
+                    <button class="btn btn-primary" @onclick="KontaktSpeichern"
+                            disabled="@(string.IsNullOrWhiteSpace(aktuellerKontakt.Vorname) || string.IsNullOrWhiteSpace(aktuellerKontakt.Nachname))">
+                        Speichern
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Lösch-Bestätigungs-Dialog -->
+@if (showDeleteDialog)
+{
+    <div class="modal show d-block" style="background: rgba(0,0,0,0.5)">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Kontakt löschen</h5>
+                </div>
+                <div class="modal-body">
+                    <p>Möchten Sie diesen Kontakt wirklich löschen?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="DeleteDialogSchließen">Abbrechen</button>
+                    <button class="btn btn-danger" @onclick="KontaktLöschenBestätigt">Löschen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int KundeId { get; set; }
+
+    private Kunde? kunde;
+    private List<Kontakt> kontakte = new();
+    private bool showDialog = false;
+    private bool showDeleteDialog = false;
+    private Kontakt aktuellerKontakt = new();
+    private int zuLöschendeKontaktId = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await DatenLaden();
+    }
+
+    private async Task DatenLaden()
+    {
+        kunde = await KundeService.GetKundeAsync(KundeId);
+        if (kunde != null)
+        {
+            kontakte = await KundeService.GetKontakteFürKundeAsync(KundeId);
+        }
+    }
+
+    private void NeuenKontaktAnlegen()
+    {
+        aktuellerKontakt = new Kontakt { KundeId = KundeId };
+        showDialog = true;
+    }
+
+    private void KontaktBearbeiten(Kontakt kontakt)
+    {
+        aktuellerKontakt = new Kontakt
+        {
+            Id = kontakt.Id,
+            Vorname = kontakt.Vorname,
+            Nachname = kontakt.Nachname,
+            Position = kontakt.Position,
+            Email = kontakt.Email,
+            Telefon = kontakt.Telefon,
+            IstHauptansprechpartner = kontakt.IstHauptansprechpartner,
+            KundeId = kontakt.KundeId
+        };
+        showDialog = true;
+    }
+
+    private async Task KontaktSpeichern()
+    {
+        if (string.IsNullOrWhiteSpace(aktuellerKontakt.Vorname) ||
+            string.IsNullOrWhiteSpace(aktuellerKontakt.Nachname))
+            return;
+
+        await KundeService.AddKontaktAsync(aktuellerKontakt);
+        await DatenLaden();
+        DialogSchließen();
+    }
+
+    private void KontaktLöschen(int id)
+    {
+        zuLöschendeKontaktId = id;
+        showDeleteDialog = true;
+    }
+
+    private async Task KontaktLöschenBestätigt()
+    {
+        await KundeService.DeleteKontaktAsync(zuLöschendeKontaktId);
+        await DatenLaden();
+        DeleteDialogSchließen();
+    }
+
+    private void DialogSchließen()
+    {
+        showDialog = false;
+        aktuellerKontakt = new Kontakt();
+    }
+
+    private void DeleteDialogSchließen()
+    {
+        showDeleteDialog = false;
+        zuLöschendeKontaktId = 0;
+    }
+
+    private void ZurückZuKunden()
+    {
+        Navigation.NavigateTo("/kunden");
+    }
+}

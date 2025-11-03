@@ -1,0 +1,159 @@
+﻿@page "/"
+@using CRMSystemNew.Services
+@using CRMSystemNew.Models
+@inject KundeService KundeService
+
+<h1>CRM Dashboard</h1>
+
+<div class="row mt-4">
+    <div class="col-md-3">
+        <div class="card text-white bg-primary">
+            <div class="card-body">
+                <h4>@kundenCount</h4>
+                <p>Kunden</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-success">
+            <div class="card-body">
+                <h4>@kontakteCount</h4>
+                <p>Kontakte</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card text-white bg-warning">
+            <div class="card-body">
+                <h4>@(letzteKunden.Count)</h4>
+                <p>Aktive Kunden</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Letzte Kunden</h5>
+            </div>
+            <div class="card-body">
+                @if (letzteKunden.Any())
+                {
+                    <ul class="list-group">
+                        @foreach (var kunde in letzteKunden)
+                        {
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                @kunde.Name
+                                <span class="badge bg-secondary">@kunde.Erstellungsdatum.ToShortDateString()</span>
+                            </li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <p>Noch keine Kunden</p>
+                }
+                <div class="mt-3">
+                    <a href="/kunden" class="btn btn-primary">Alle Kunden anzeigen</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h5>Schnellnavigation</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="/kunden" class="btn btn-outline-primary">Kundenverwaltung</a>
+                    <button class="btn btn-outline-success" @onclick="NeuenKundenErstellen">Neuen Kunden erstellen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Schnell-Kunden-Erstellung -->
+@if (showSchnellDialog)
+{
+    <div class="modal show d-block" style="background: rgba(0,0,0,0.5)">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Schnell: Neuer Kunde</h5>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Name *</label>
+                        <input @bind="schnellKunde.Name" class="form-control" placeholder="Firmenname" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input @bind="schnellKunde.Email" class="form-control" placeholder="email@firma.de" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="SchnellDialogSchließen">Abbrechen</button>
+                    <button class="btn btn-primary" @onclick="SchnellKundeSpeichern" disabled="@(string.IsNullOrWhiteSpace(schnellKunde.Name))">
+                        Speichern
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private int kundenCount = 0;
+    private int kontakteCount = 0;
+    private List<Kunde> letzteKunden = new();
+    private bool showSchnellDialog = false;
+    private Kunde schnellKunde = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await DatenLaden();
+    }
+
+    private async Task DatenLaden()
+    {
+        var kunden = await KundeService.GetKundenAsync();
+        kundenCount = kunden.Count;
+        letzteKunden = kunden.OrderByDescending(k => k.Erstellungsdatum).Take(5).ToList();
+
+        // Kontakte zählen
+        var alleKontakte = new List<Kontakt>();
+        foreach (var kunde in kunden)
+        {
+            var kontakte = await KundeService.GetKontakteFürKundeAsync(kunde.Id);
+            alleKontakte.AddRange(kontakte);
+        }
+        kontakteCount = alleKontakte.Count;
+    }
+
+    private void NeuenKundenErstellen()
+    {
+        schnellKunde = new Kunde();
+        showSchnellDialog = true;
+    }
+
+    private async Task SchnellKundeSpeichern()
+    {
+        if (string.IsNullOrWhiteSpace(schnellKunde.Name))
+            return;
+
+        await KundeService.AddKundeAsync(schnellKunde);
+        await DatenLaden();
+        SchnellDialogSchließen();
+    }
+
+    private void SchnellDialogSchließen()
+    {
+        showSchnellDialog = false;
+        schnellKunde = new Kunde();
+    }
+}

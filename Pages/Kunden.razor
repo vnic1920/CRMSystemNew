@@ -1,0 +1,234 @@
+﻿@page "/kunden"
+@using CRMSystemNew.Services
+@using CRMSystemNew.Models
+@inject KundeService KundeService
+
+<h3>Kundenverwaltung</h3>
+
+<!-- Suchfunktion und Neuer Kunde Button -->
+<div class="row mb-3">
+    <div class="col-md-6">
+        <input @bind="suchText" @bind:event="oninput" class="form-control" placeholder="Kunden suchen..." />
+    </div>
+    <div class="col-md-6">
+        <button class="btn btn-success" @onclick="NeuenKundenAnlegen">
+            + Neuer Kunde
+        </button>
+    </div>
+</div>
+
+<!-- Kunden Tabelle -->
+@if (gefilterteKunden.Any())
+{
+    <table class="table table-striped">
+        <thead class="table-dark">
+            <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Telefon</th>
+                <th>Stadt</th>
+                <th>Erstellt am</th>
+                <th>Aktionen</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var kunde in gefilterteKunden)
+            {
+                <tr>
+                    <td>@kunde.Name</td>
+                    <td>@kunde.Email</td>
+                    <td>@kunde.Telefon</td>
+                    <td>@kunde.Stadt</td>
+                    <td>@kunde.Erstellungsdatum.ToShortDateString()</td>
+                    <td>
+                        <button class="btn btn-sm btn-primary" @onclick="() => KundeBearbeiten(kunde)">
+                            Bearbeiten
+                        </button>
+                        <a href="/kontakte/@kunde.Id" class="btn btn-sm btn-info">Kontakte</a>
+                        <button class="btn btn-sm btn-danger" @onclick="() => KundeLöschen(kunde.Id)">
+                            Löschen
+                        </button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else
+{
+    <div class="alert alert-info">
+        @(kunden.Any() ? "Keine Kunden gefunden" : "Noch keine Kunden vorhanden")
+    </div>
+}
+
+<!-- Bearbeiten/Erstellen Dialog -->
+@if (showDialog)
+{
+    <div class="modal show d-block" style="background: rgba(0,0,0,0.5)">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">@(aktuellerKunde?.Id == 0 ? "Neuer Kunde" : "Kunde bearbeiten")</h5>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Name *</label>
+                        <input @bind="aktuellerKunde.Name" class="form-control" />
+                        @if (string.IsNullOrWhiteSpace(aktuellerKunde.Name))
+                        {
+                            <small class="text-danger">Name ist erforderlich</small>
+                        }
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Email</label>
+                        <input @bind="aktuellerKunde.Email" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Telefon</label>
+                        <input @bind="aktuellerKunde.Telefon" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Stadt</label>
+                        <input @bind="aktuellerKunde.Stadt" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Adresse</label>
+                        <input @bind="aktuellerKunde.Adresse" class="form-control" />
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Postleitzahl</label>
+                        <input @bind="aktuellerKunde.Postleitzahl" class="form-control" />
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="DialogSchließen">Abbrechen</button>
+                    <button class="btn btn-primary" @onclick="KundeSpeichern" disabled="@(string.IsNullOrWhiteSpace(aktuellerKunde.Name))">
+                        Speichern
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Lösch-Bestätigungs-Dialog -->
+@if (showDeleteDialog)
+{
+    <div class="modal show d-block" style="background: rgba(0,0,0,0.5)">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Kunde löschen</h5>
+                </div>
+                <div class="modal-body">
+                    <p>Möchten Sie diesen Kunden wirklich löschen?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="DeleteDialogSchließen">Abbrechen</button>
+                    <button class="btn btn-danger" @onclick="KundeLöschenBestätigt">Löschen</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    private List<Kunde> kunden = new();
+    private List<Kunde> gefilterteKunden = new();
+    private string suchText = "";
+    private bool showDialog = false;
+    private bool showDeleteDialog = false;
+    private Kunde aktuellerKunde = new();
+    private int zuLöschendeKundeId = 0;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await KundenLaden();
+    }
+
+    private async Task KundenLaden()
+    {
+        kunden = await KundeService.GetKundenAsync();
+        KundenFiltern();
+    }
+
+    private void KundenFiltern()
+    {
+        if (string.IsNullOrWhiteSpace(suchText))
+        {
+            gefilterteKunden = kunden;
+        }
+        else
+        {
+            gefilterteKunden = kunden.Where(k =>
+                k.Name.Contains(suchText, StringComparison.OrdinalIgnoreCase) ||
+                (k.Email != null && k.Email.Contains(suchText, StringComparison.OrdinalIgnoreCase)) ||
+                (k.Stadt != null && k.Stadt.Contains(suchText, StringComparison.OrdinalIgnoreCase))
+            ).ToList();
+        }
+    }
+
+    private void NeuenKundenAnlegen()
+    {
+        aktuellerKunde = new Kunde();
+        showDialog = true;
+    }
+
+    private void KundeBearbeiten(Kunde kunde)
+    {
+        aktuellerKunde = new Kunde
+        {
+            Id = kunde.Id,
+            Name = kunde.Name,
+            Email = kunde.Email,
+            Telefon = kunde.Telefon,
+            Stadt = kunde.Stadt,
+            Adresse = kunde.Adresse,
+            Postleitzahl = kunde.Postleitzahl
+        };
+        showDialog = true;
+    }
+
+    private async Task KundeSpeichern()
+    {
+        if (string.IsNullOrWhiteSpace(aktuellerKunde.Name))
+            return;
+
+        if (aktuellerKunde.Id == 0)
+        {
+            await KundeService.AddKundeAsync(aktuellerKunde);
+        }
+        else
+        {
+            await KundeService.UpdateKundeAsync(aktuellerKunde);
+        }
+
+        await KundenLaden();
+        DialogSchließen();
+    }
+
+    private void KundeLöschen(int id)
+    {
+        zuLöschendeKundeId = id;
+        showDeleteDialog = true;
+    }
+
+    private async Task KundeLöschenBestätigt()
+    {
+        await KundeService.DeleteKundeAsync(zuLöschendeKundeId);
+        await KundenLaden();
+        DeleteDialogSchließen();
+    }
+
+    private void DialogSchließen()
+    {
+        showDialog = false;
+        aktuellerKunde = new Kunde();
+    }
+
+    private void DeleteDialogSchließen()
+    {
+        showDeleteDialog = false;
+        zuLöschendeKundeId = 0;
+    }
+}

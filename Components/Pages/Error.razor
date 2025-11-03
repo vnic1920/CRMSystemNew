@@ -1,0 +1,13 @@
+﻿@page "/error"
+@inject NavigationManager Navigation
+
+<h1>Fehler</h1>
+<p>Es ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut.</p>
+<button @onclick="ZurStartseite" class="btn btn-primary">Zur Startseite</button>
+
+@code {
+    private void ZurStartseite()
+    {
+        Navigation.NavigateTo("/");
+    }
+}
